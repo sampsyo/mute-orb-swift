@@ -3,12 +3,14 @@ import CoreBluetooth
 let SERVICE = CBUUID.init(string: "ff0f")
 let COLOR_CHAR = CBUUID.init(string: "fffc")
 
-func mkColor(w: UInt8, r: UInt8, g: UInt8, b: UInt8) -> Data {
+typealias Color = (w: UInt8, r: UInt8, g: UInt8, b: UInt8)
+
+func mkColor(_ color: Color) -> Data {
     var data = Data.init(count: 4)
-    data[0] = w
-    data[1] = r
-    data[2] = g
-    data[3] = b
+    data[0] = color.w
+    data[1] = color.r
+    data[2] = color.g
+    data[3] = color.b
     return data
 }
 
@@ -54,8 +56,8 @@ class Orb {
         peripheral.readValue(for: colorChar)
     }
     
-    func setColor(_ color: Data) {
-        peripheral.writeValue(color, for: colorChar,
+    func setColor(_ color: Color) {
+        peripheral.writeValue(mkColor(color), for: colorChar,
                               type: CBCharacteristicWriteType.withoutResponse)
         print("sent write")
     }
