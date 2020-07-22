@@ -5,18 +5,6 @@ let COLOR_CHAR = CBUUID.init(string: "fffc")
 
 var done = false
 
-func getChar(service: CBService, charId: CBUUID) -> CBCharacteristic? {
-    guard let chars = service.characteristics else {
-        return nil
-    }
-    for char in chars {
-        if char.uuid == charId {
-            return char
-        }
-    }
-    return nil
-}
-
 func mkColor(w: UInt8, r: UInt8, g: UInt8, b: UInt8) -> Data {
     var data = Data.init(count: 4)
     data[0] = w

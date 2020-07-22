@@ -18,6 +18,18 @@ func getDevice(cm: CBCentralManager) -> CBPeripheral? {
     }
 }
 
+func getChar(service: CBService, charId: CBUUID) -> CBCharacteristic? {
+    guard let chars = service.characteristics else {
+        return nil
+    }
+    for char in chars {
+        if char.uuid == charId {
+            return char
+        }
+    }
+    return nil
+}
+
 class Finder: NSObject, CBCentralManagerDelegate {
     let callback: ((CBPeripheral) -> ())
     var peripheral: CBPeripheral?
