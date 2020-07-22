@@ -44,18 +44,18 @@ class OrbManager: NSObject, CBPeripheralDelegate {
             cbk(orb)
         }
         characterizer = ch
-        
+
         finder = Finder() { periph in
             print("connected", periph.identifier)
             periph.delegate = ch
             periph.discoverServices([SERVICE])
         }
-        
+
         cm = CBCentralManager.init(delegate: finder, queue: nil)
     }
 
     // Peripheral delegate methods.
-    
+
     func peripheral(_ peripheral: CBPeripheral,
                     didUpdateValueFor characteristic: CBCharacteristic,
                     error: Error?) {
@@ -80,13 +80,13 @@ class Orb {
     let service: CBService
     let colorChar: CBCharacteristic
     var colorCbk: ((Color) -> ())?
-    
+
     init(peripheral: CBPeripheral, service: CBService, colorChar: CBCharacteristic) {
         self.peripheral = peripheral
         self.service = service
         self.colorChar = colorChar
     }
-    
+
     func getColor(cbk: @escaping (Color) -> ()) {
         guard colorCbk == nil else {
             fatalError("tried to read with read outstanding")
@@ -95,13 +95,13 @@ class Orb {
         peripheral.readValue(for: colorChar)
         print("sent read")
     }
-    
+
     func setColor(_ color: Color) {
         peripheral.writeValue(mkColor(color), for: colorChar,
                               type: CBCharacteristicWriteType.withoutResponse)
         print("sent write")
     }
-    
+
     func didRead(_ char: CBCharacteristic) {
         if (char == colorChar) {
             guard let cbk = colorCbk else {
