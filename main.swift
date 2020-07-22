@@ -2,8 +2,8 @@ import CoreBluetooth
 
 let DEVICE = "073D8EDC-A732-4029-BACB-F893D3E9C7E3"
 
-// The service with all the interesting stuff.
 let SERVICE = CBUUID.init(string: "ff0f")
+let COLOR_CHAR = CBUUID.init(string: "fffc")
 
 func getDevice(cm: CBCentralManager) -> CBPeripheral? {
     guard let uuid = UUID.init(uuidString: DEVICE) else {
@@ -22,7 +22,7 @@ func getDevice(cm: CBCentralManager) -> CBPeripheral? {
 }
 
 class Scanner: NSObject, CBCentralManagerDelegate {
-    var callback: ((CBPeripheral) -> ())? // XXX
+    var callback: ((CBPeripheral) -> ())?
     var peripheral: CBPeripheral?
 
     func centralManager(_ central: CBCentralManager,
@@ -78,6 +78,8 @@ class Scanner: NSObject, CBCentralManagerDelegate {
 }
 
 class OrbDelegate: NSObject, CBPeripheralDelegate {
+    var callback: ((CBPeripheral, CBService) -> ())?
+
     func peripheral(_ peripheral: CBPeripheral,
          didDiscoverServices error: Error?) {
         print("discovered services")
@@ -98,16 +100,41 @@ class OrbDelegate: NSObject, CBPeripheralDelegate {
                     didDiscoverCharacteristicsFor service: CBService,
                     error: Error?) {
         print("discovered characteristics")
-        guard let chars = service.characteristics else {
-            print("still missing characteristics?!")
-            return
+        if let cbk = callback {
+            cbk(peripheral, service)
         }
-        print(chars)
     }
+    
+    func peripheral(_ peripheral: CBPeripheral,
+                    didUpdateValueFor characteristic: CBCharacteristic,
+                    error: Error?) {
+        print("got a value", characteristic.value!)
+    }
+}
+
+func getChar(service: CBService, charId: CBUUID) -> CBCharacteristic? {
+    guard let chars = service.characteristics else {
+        return nil
+    }
+    for char in chars {
+        if char.uuid == charId {
+            return char
+        }
+    }
+    return nil
 }
 
 let scanner = Scanner()
 let delegate = OrbDelegate()
+delegate.callback = { orb, svc in
+    guard let char = getChar(service: svc, charId: COLOR_CHAR) else {
+        print("missing color characteristic")
+        return
+    }
+    orb.readValue(for: char)
+    print(char)
+}
+
 scanner.scan() { orb in
     print("connected to orb", orb.identifier,
           "in state", orb.state.rawValue)
