@@ -18,7 +18,6 @@ func getDevice() {
 /* getDevice() */
 
 class Scanner: NSObject, CBCentralManagerDelegate {
-    var cm: CBCentralManager?
     var callback: ((CBPeripheral) -> ())?
 
     func centralManager(_ central: CBCentralManager,
@@ -31,7 +30,10 @@ class Scanner: NSObject, CBCentralManagerDelegate {
                 print("discovered device before callback assigned")
                 return
             }
-            cbk(periph)
+
+            // cbk(periph)
+            print("connecting")
+            central.connect(periph)
         }
     }
 
@@ -45,11 +47,19 @@ class Scanner: NSObject, CBCentralManagerDelegate {
         }
     }
 
+    func centralManager(_ central: CBCentralManager,
+                        didConnect peripheral: CBPeripheral) {
+        print("connected", peripheral)
+    }
+
+    func centralManager(_ central: CBCentralManager,
+                        didFailToConnect peripheral: CBPeripheral,
+                        error: Error?) {
+        print("failed to connect", peripheral)
+    }
+
     func scan(cbk: @escaping (CBPeripheral) -> ()) {
         callback = cbk
-
-        // Maybe this should be "reusable" with an `if cm` check?
-        cm = CBCentralManager.init(delegate: self, queue: nil)
     }
 }
 
@@ -64,10 +74,19 @@ class OrbDelegate: NSObject, CBPeripheralDelegate {
 let scanner = Scanner()
 scanner.scan() { orb in
     print("found orb", orb.identifier)
-    let delegate = OrbDelegate()
-    orb.delegate = delegate
-    orb.discoverServices(nil)
+    print(orb.state.rawValue)
+    print(cm)
+    cm.connect(orb, options: [
+        CBConnectPeripheralOptionNotifyOnConnectionKey: true
+    ])
+
+    // let delegate = OrbDelegate()
+    // orb.delegate = delegate
+    // orb.discoverServices(nil)
 }
+
+let cm = CBCentralManager.init(delegate: scanner, queue: nil)
+print(cm)
 
 while RunLoop.current.run(
     mode: RunLoop.Mode.default,
