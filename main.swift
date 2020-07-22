@@ -1,7 +1,9 @@
 import Foundation
 
 let manager = OrbManager() { orb in
-    orb.getColor()
+    orb.getColor() { color in
+        print(color)
+    }
 
     orb.setColor((
         255,

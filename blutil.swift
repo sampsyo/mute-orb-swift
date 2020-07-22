@@ -83,10 +83,10 @@ class Finder: NSObject, CBCentralManagerDelegate {
 }
 
 class Characterizer: NSObject, CBPeripheralDelegate {
-    let callback: ((CBPeripheral, CBService) -> ())
+    let discoverCbk: (CBPeripheral, CBService) -> ()
 
     init(cbk: @escaping (CBPeripheral, CBService) -> ()) {
-        callback = cbk
+        discoverCbk = cbk
     }
 
     func peripheral(_ peripheral: CBPeripheral,
@@ -109,23 +109,6 @@ class Characterizer: NSObject, CBPeripheralDelegate {
                     didDiscoverCharacteristicsFor service: CBService,
                     error: Error?) {
         print("discovered characteristics")
-        callback(peripheral, service)
-    }
-
-    func peripheral(_ peripheral: CBPeripheral,
-                    didUpdateValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("got a value", characteristic.value!)
-    }
-
-    func peripheral(_ peripheral: CBPeripheral,
-                    didWriteValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("finished writing")
-    }
-
-    func peripheralIsReady(
-        toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        print("ready")
+        discoverCbk(peripheral, service)
     }
 }
