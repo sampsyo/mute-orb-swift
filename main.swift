@@ -124,6 +124,15 @@ func getChar(service: CBService, charId: CBUUID) -> CBCharacteristic? {
     return nil
 }
 
+func mkColor(w: UInt8, r: UInt8, g: UInt8, b: UInt8) -> Data {
+    var data = Data.init(count: 4)
+    data[0] = w
+    data[1] = r
+    data[2] = g
+    data[3] = b
+    return data
+}
+
 let scanner = Scanner()
 let delegate = OrbDelegate()
 delegate.callback = { orb, svc in
@@ -132,7 +141,15 @@ delegate.callback = { orb, svc in
         return
     }
     orb.readValue(for: char)
-    print(char)
+
+    let color = mkColor(
+        w: 255,
+        r: UInt8.random(in: 0...255),
+        g: UInt8.random(in: 0...255),
+        b: UInt8.random(in: 0...255)
+    )
+    orb.writeValue(color, for: char,
+                   type: CBCharacteristicWriteType.withoutResponse)
 }
 
 scanner.scan() { orb in
