@@ -46,7 +46,7 @@ class Scanner: NSObject, CBCentralManagerDelegate {
             // Try looking for a previously-connected device.
             if let periph = getDevice(cm: central) {
                 peripheral = periph
-                print("found existing", periph)
+                print("found existing")
                 central.connect(periph)
             } else {
                 print("scanning")
@@ -81,7 +81,28 @@ class OrbDelegate: NSObject, CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral,
          didDiscoverServices error: Error?) {
         print("discovered services")
-        print(peripheral.services)
+        guard let svcs = peripheral.services else {
+            print("still missing services?!")
+            return
+        }
+        guard svcs.count == 1 else {
+            print("expected one service")
+            return
+        }
+        let orbSvc = svcs[0]
+        
+        peripheral.discoverCharacteristics(nil, for: orbSvc)
+    }
+    
+    func peripheral(_ peripheral: CBPeripheral,
+                    didDiscoverCharacteristicsFor service: CBService,
+                    error: Error?) {
+        print("discovered characteristics")
+        guard let chars = service.characteristics else {
+            print("still missing characteristics?!")
+            return
+        }
+        print(chars)
     }
 }
 
