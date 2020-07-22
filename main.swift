@@ -94,10 +94,10 @@ class OrbDelegate: NSObject, CBPeripheralDelegate {
             return
         }
         let orbSvc = svcs[0]
-        
+
         peripheral.discoverCharacteristics(nil, for: orbSvc)
     }
-    
+
     func peripheral(_ peripheral: CBPeripheral,
                     didDiscoverCharacteristicsFor service: CBService,
                     error: Error?) {
@@ -106,7 +106,7 @@ class OrbDelegate: NSObject, CBPeripheralDelegate {
             cbk(peripheral, service)
         }
     }
-    
+
     func peripheral(_ peripheral: CBPeripheral,
                     didUpdateValueFor characteristic: CBCharacteristic,
                     error: Error?) {
