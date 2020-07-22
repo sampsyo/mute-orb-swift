@@ -19,8 +19,12 @@ func getDevice(cm: CBCentralManager) -> CBPeripheral? {
 }
 
 class Finder: NSObject, CBCentralManagerDelegate {
-    var callback: ((CBPeripheral) -> ())?
+    let callback: ((CBPeripheral) -> ())
     var peripheral: CBPeripheral?
+
+    init(cbk: @escaping (CBPeripheral) -> ()) {
+        callback = cbk
+    }
 
     func centralManager(_ central: CBCentralManager,
                         didDiscover periph: CBPeripheral,
@@ -56,11 +60,7 @@ class Finder: NSObject, CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager,
                         didConnect peripheral: CBPeripheral) {
-        guard let cbk = callback else {
-            print("connected before callback assigned")
-            return
-        }
-        cbk(peripheral)
+        callback(peripheral)
     }
 
     func centralManager(_ central: CBCentralManager,
@@ -68,8 +68,53 @@ class Finder: NSObject, CBCentralManagerDelegate {
                         error: Error?) {
         print("failed to connect", peripheral)
     }
+}
 
-    func scan(cbk: @escaping (CBPeripheral) -> ()) {
+class Characterizer: NSObject, CBPeripheralDelegate {
+    let callback: ((CBPeripheral, CBService) -> ())
+
+    init(cbk: @escaping (CBPeripheral, CBService) -> ()) {
         callback = cbk
+    }
+
+    func peripheral(_ peripheral: CBPeripheral,
+         didDiscoverServices error: Error?) {
+        print("discovered services")
+        guard let svcs = peripheral.services else {
+            print("still missing services?!")
+            return
+        }
+        guard svcs.count == 1 else {
+            print("expected one service")
+            return
+        }
+        let orbSvc = svcs[0]
+
+        peripheral.discoverCharacteristics(nil, for: orbSvc)
+    }
+
+    func peripheral(_ peripheral: CBPeripheral,
+                    didDiscoverCharacteristicsFor service: CBService,
+                    error: Error?) {
+        print("discovered characteristics")
+        callback(peripheral, service)
+    }
+
+    func peripheral(_ peripheral: CBPeripheral,
+                    didUpdateValueFor characteristic: CBCharacteristic,
+                    error: Error?) {
+        print("got a value", characteristic.value!)
+    }
+
+    func peripheral(_ peripheral: CBPeripheral,
+                    didWriteValueFor characteristic: CBCharacteristic,
+                    error: Error?) {
+        print("finished writing")
+    }
+
+    func peripheralIsReady(
+        toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        print("ready")
+        done = true
     }
 }

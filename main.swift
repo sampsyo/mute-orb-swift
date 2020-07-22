@@ -5,53 +5,6 @@ let COLOR_CHAR = CBUUID.init(string: "fffc")
 
 var done = false
 
-class Characterizer: NSObject, CBPeripheralDelegate {
-    var callback: ((CBPeripheral, CBService) -> ())?
-
-    func peripheral(_ peripheral: CBPeripheral,
-         didDiscoverServices error: Error?) {
-        print("discovered services")
-        guard let svcs = peripheral.services else {
-            print("still missing services?!")
-            return
-        }
-        guard svcs.count == 1 else {
-            print("expected one service")
-            return
-        }
-        let orbSvc = svcs[0]
-
-        peripheral.discoverCharacteristics(nil, for: orbSvc)
-    }
-
-    func peripheral(_ peripheral: CBPeripheral,
-                    didDiscoverCharacteristicsFor service: CBService,
-                    error: Error?) {
-        print("discovered characteristics")
-        if let cbk = callback {
-            cbk(peripheral, service)
-        }
-    }
-
-    func peripheral(_ peripheral: CBPeripheral,
-                    didUpdateValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("got a value", characteristic.value!)
-    }
-
-    func peripheral(_ peripheral: CBPeripheral,
-                    didWriteValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("finished writing")
-    }
-
-    func peripheralIsReady(
-        toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        print("ready")
-        done = true
-    }
-}
-
 func getChar(service: CBService, charId: CBUUID) -> CBCharacteristic? {
     guard let chars = service.characteristics else {
         return nil
@@ -73,9 +26,15 @@ func mkColor(w: UInt8, r: UInt8, g: UInt8, b: UInt8) -> Data {
     return data
 }
 
-let scanner = Finder()
-let delegate = Characterizer()
-delegate.callback = { orb, svc in
+let finder = Finder() { orb in
+    print("connected to orb", orb.identifier,
+          "in state", orb.state.rawValue)
+
+    orb.delegate = characterizer
+    orb.discoverServices([SERVICE])
+}
+
+let characterizer = Characterizer() { orb, svc in
     guard let char = getChar(service: svc, charId: COLOR_CHAR) else {
         print("missing color characteristic")
         return
@@ -93,15 +52,7 @@ delegate.callback = { orb, svc in
     print("sent write")
 }
 
-scanner.scan() { orb in
-    print("connected to orb", orb.identifier,
-          "in state", orb.state.rawValue)
-
-    orb.delegate = delegate
-    orb.discoverServices([SERVICE])
-}
-
-let cm = CBCentralManager.init(delegate: scanner, queue: nil)
+let cm = CBCentralManager.init(delegate: finder, queue: nil)
 
 while !done && RunLoop.current.run(
     mode: RunLoop.Mode.default,
