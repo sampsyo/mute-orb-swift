@@ -38,9 +38,25 @@ class OrbManager {
 class Orb {
     let peripheral: CBPeripheral
     let service: CBService
+    let colorChar: CBCharacteristic
     
     init(peripheral: CBPeripheral, service: CBService) {
         self.peripheral = peripheral
         self.service = service
+
+        guard let char = getChar(service: service, charId: COLOR_CHAR) else {
+            fatalError("missing color characteristic")
+        }
+        colorChar = char
+    }
+    
+    func getColor() {
+        peripheral.readValue(for: colorChar)
+    }
+    
+    func setColor(_ color: Data) {
+        peripheral.writeValue(color, for: colorChar,
+                              type: CBCharacteristicWriteType.withoutResponse)
+        print("sent write")
     }
 }
