@@ -23,47 +23,68 @@ func parseColor(_ data: Data) -> Color {
     )
 }
 
-class OrbManager {
-    let finder: Finder
-    let characterizer: Characterizer
-    let cm: CBCentralManager
+class OrbManager: NSObject, CBPeripheralDelegate {
+    var finder: Finder?
+    var characterizer: Characterizer?
+    var cm: CBCentralManager?
+    var orb: Orb?
 
-    init(cbk: @escaping (Orb) -> ()) {
-        let ch = Characterizer() { orb, svc in
-            let orb = Orb(peripheral: orb, service: svc)
+    func start(cbk: @escaping (Orb) -> ()) {
+        characterizer = nil
+        finder = nil
+        cm = nil
+
+        let ch = Characterizer() { periph, svc in
+            guard let char = getChar(service: svc, charId: COLOR_CHAR) else {
+                fatalError("missing color characteristic")
+            }
+            let orb = Orb(peripheral: periph, service: svc, colorChar: char)
+            self.orb = orb
+            periph.delegate = self
             cbk(orb)
         }
         characterizer = ch
-
-        finder = Finder() { orb in
-            print("connected to orb", orb.identifier)
-
-            orb.delegate = ch
-            orb.discoverServices([SERVICE])
+        
+        finder = Finder() { periph in
+            print("connected", periph.identifier)
+            periph.delegate = ch
+            periph.discoverServices([SERVICE])
         }
-
+        
         cm = CBCentralManager.init(delegate: finder, queue: nil)
+    }
+
+    // Peripheral delegate methods.
+    
+    func peripheral(_ peripheral: CBPeripheral,
+                    didUpdateValueFor characteristic: CBCharacteristic,
+                    error: Error?) {
+        print("got a value", characteristic.value!)
+        orb?.didRead(characteristic)
+    }
+
+    func peripheral(_ peripheral: CBPeripheral,
+                    didWriteValueFor characteristic: CBCharacteristic,
+                    error: Error?) {
+        print("finished writing")
+    }
+
+    func peripheralIsReady(
+        toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        print("ready")
     }
 }
 
-class Orb: NSObject, CBPeripheralDelegate {
+class Orb {
     let peripheral: CBPeripheral
     let service: CBService
     let colorChar: CBCharacteristic
     var colorCbk: ((Color) -> ())?
     
-    init(peripheral: CBPeripheral, service: CBService) {
+    init(peripheral: CBPeripheral, service: CBService, colorChar: CBCharacteristic) {
         self.peripheral = peripheral
         self.service = service
-
-        guard let char = getChar(service: service, charId: COLOR_CHAR) else {
-            fatalError("missing color characteristic")
-        }
-        colorChar = char
-
-        // Switch delegate to point here for subsequent events.
-        super.init()
-        peripheral.delegate = self
+        self.colorChar = colorChar
     }
     
     func getColor(cbk: @escaping (Color) -> ()) {
@@ -80,30 +101,14 @@ class Orb: NSObject, CBPeripheralDelegate {
                               type: CBCharacteristicWriteType.withoutResponse)
         print("sent write")
     }
-
-    // Peripheral delegate methods.
     
-    func peripheral(_ peripheral: CBPeripheral,
-                    didUpdateValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("got a value", characteristic.value!)
-        if (characteristic == colorChar) {
+    func didRead(_ char: CBCharacteristic) {
+        if (char == colorChar) {
             guard let cbk = colorCbk else {
                 fatalError("got color without asking for it")
             }
             cbk(parseColor(colorChar.value!))
             colorCbk = nil
         }
-    }
-
-    func peripheral(_ peripheral: CBPeripheral,
-                    didWriteValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("finished writing")
-    }
-
-    func peripheralIsReady(
-        toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        print("ready")
     }
 }
