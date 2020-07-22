@@ -127,6 +127,5 @@ class Characterizer: NSObject, CBPeripheralDelegate {
     func peripheralIsReady(
         toSendWriteWithoutResponse peripheral: CBPeripheral) {
         print("ready")
-        done = true
     }
 }
