@@ -1,23 +1,25 @@
 import CoreBluetooth
 
-let DEVICE = "d4-97-4b-1a-ac-e6"
+let DEVICE = "073D8EDC-A732-4029-BACB-F893D3E9C7E3"
 
 // The service with all the interesting stuff.
 let SERVICE = CBUUID.init(string: "ff0f")
 
-func getDevice() {
+func getDevice(cm: CBCentralManager) -> CBPeripheral? {
     guard let uuid = UUID.init(uuidString: DEVICE) else {
         print("bad UUID")
-        return
+        return nil
     }
 
-    let cm = CBCentralManager()
     let peripherals = cm.retrievePeripherals(withIdentifiers: [
         uuid
     ])
-    print(peripherals)
+    if peripherals.isEmpty {
+        return nil
+    } else {
+        return peripherals[0]
+    }
 }
-/* getDevice() */
 
 class Scanner: NSObject, CBCentralManagerDelegate {
     var callback: ((CBPeripheral) -> ())? // XXX
@@ -41,8 +43,15 @@ class Scanner: NSObject, CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {
         case .poweredOn:
-            print("scanning")
-            central.scanForPeripherals(withServices: nil)
+            // Try looking for a previously-connected device.
+            if let periph = getDevice(cm: central) {
+                peripheral = periph
+                print("found existing", periph)
+                central.connect(periph)
+            } else {
+                print("scanning")
+                central.scanForPeripherals(withServices: nil)
+            }
         default:
             print("some other state")
         }
