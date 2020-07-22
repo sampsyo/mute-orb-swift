@@ -5,6 +5,8 @@ let DEVICE = "073D8EDC-A732-4029-BACB-F893D3E9C7E3"
 let SERVICE = CBUUID.init(string: "ff0f")
 let COLOR_CHAR = CBUUID.init(string: "fffc")
 
+var done = false
+
 func getDevice(cm: CBCentralManager) -> CBPeripheral? {
     guard let uuid = UUID.init(uuidString: DEVICE) else {
         print("bad UUID")
@@ -110,6 +112,18 @@ class OrbDelegate: NSObject, CBPeripheralDelegate {
                     error: Error?) {
         print("got a value", characteristic.value!)
     }
+
+    func peripheral(_ peripheral: CBPeripheral,
+                    didWriteValueFor characteristic: CBCharacteristic,
+                    error: Error?) {
+        print("finished writing")
+    }
+
+    func peripheralIsReady(
+        toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        print("ready")
+        done = true
+    }
 }
 
 func getChar(service: CBService, charId: CBUUID) -> CBCharacteristic? {
@@ -140,7 +154,7 @@ delegate.callback = { orb, svc in
         print("missing color characteristic")
         return
     }
-    orb.readValue(for: char)
+    //orb.readValue(for: char)
 
     let color = mkColor(
         w: 255,
@@ -150,6 +164,7 @@ delegate.callback = { orb, svc in
     )
     orb.writeValue(color, for: char,
                    type: CBCharacteristicWriteType.withoutResponse)
+    print("sent write")
 }
 
 scanner.scan() { orb in
@@ -162,6 +177,6 @@ scanner.scan() { orb in
 
 let cm = CBCentralManager.init(delegate: scanner, queue: nil)
 
-while RunLoop.current.run(
+while !done && RunLoop.current.run(
     mode: RunLoop.Mode.default,
     before: Date.distantFuture) { }
