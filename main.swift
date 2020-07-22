@@ -18,20 +18,21 @@ func getDevice() {
 /* getDevice() */
 
 class Scanner: NSObject, CBCentralManagerDelegate {
-    var callback: ((CBPeripheral) -> ())?
+    var callback: ((CBPeripheral) -> ())? // XXX
+    var peripheral: CBPeripheral?
 
     func centralManager(_ central: CBCentralManager,
                         didDiscover periph: CBPeripheral,
                         advertisementData: [String : Any],
                         rssi RSSI: NSNumber) {
         if periph.name == "PLAYBULB sphere" {
-            /* central.stopScan() */
-            guard let cbk = callback else {
-                print("discovered device before callback assigned")
+            central.stopScan()
+            guard peripheral == nil else {
+                print("found two orbs?!")
                 return
             }
-
-            cbk(periph)
+            peripheral = periph
+            central.connect(periph)
         }
     }
 
@@ -47,7 +48,11 @@ class Scanner: NSObject, CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager,
                         didConnect peripheral: CBPeripheral) {
-        print("connected", peripheral)
+        guard let cbk = callback else {
+            print("connected before callback assigned")
+            return
+        }
+        cbk(peripheral)
     }
 
     func centralManager(_ central: CBCentralManager,
@@ -65,23 +70,18 @@ class OrbDelegate: NSObject, CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral,
          didDiscoverServices error: Error?) {
         print("discovered services")
-        print(peripheral)
+        print(peripheral.services)
     }
 }
 
 let scanner = Scanner()
+let delegate = OrbDelegate()
 scanner.scan() { orb in
-    print("found orb", orb.identifier)
-    print(orb.state.rawValue)
-    print("connecting")
-    cm.connect(orb, options: [
-        CBConnectPeripheralOptionNotifyOnConnectionKey: true
-    ])
-    print("tried to connect", orb.state.rawValue)
+    print("connected to orb", orb.identifier,
+          "in state", orb.state.rawValue)
 
-    // let delegate = OrbDelegate()
-    // orb.delegate = delegate
-    // orb.discoverServices(nil)
+    orb.delegate = delegate
+    orb.discoverServices(nil)
 }
 
 let cm = CBCentralManager.init(delegate: scanner, queue: nil)
