@@ -2,6 +2,8 @@ import CoreBluetooth
 
 let DEVICE = "d4-97-4b-1a-ac-e6"
 
+// The service with all the interesting stuff.
+let SERVICE = CBUUID.init(string: "ff0f")
 
 func getDevice() {
     guard let uuid = UUID.init(uuidString: DEVICE) else {
@@ -81,7 +83,7 @@ scanner.scan() { orb in
           "in state", orb.state.rawValue)
 
     orb.delegate = delegate
-    orb.discoverServices(nil)
+    orb.discoverServices([SERVICE])
 }
 
 let cm = CBCentralManager.init(delegate: scanner, queue: nil)
