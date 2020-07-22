@@ -23,7 +23,7 @@ func getDevice(cm: CBCentralManager) -> CBPeripheral? {
     }
 }
 
-class Scanner: NSObject, CBCentralManagerDelegate {
+class Finder: NSObject, CBCentralManagerDelegate {
     var callback: ((CBPeripheral) -> ())?
     var peripheral: CBPeripheral?
 
@@ -79,7 +79,7 @@ class Scanner: NSObject, CBCentralManagerDelegate {
     }
 }
 
-class OrbDelegate: NSObject, CBPeripheralDelegate {
+class Characterizer: NSObject, CBPeripheralDelegate {
     var callback: ((CBPeripheral, CBService) -> ())?
 
     func peripheral(_ peripheral: CBPeripheral,
@@ -147,8 +147,8 @@ func mkColor(w: UInt8, r: UInt8, g: UInt8, b: UInt8) -> Data {
     return data
 }
 
-let scanner = Scanner()
-let delegate = OrbDelegate()
+let scanner = Finder()
+let delegate = Characterizer()
 delegate.callback = { orb, svc in
     guard let char = getChar(service: svc, charId: COLOR_CHAR) else {
         print("missing color characteristic")
