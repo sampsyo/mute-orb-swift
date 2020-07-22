@@ -25,15 +25,13 @@ class Scanner: NSObject, CBCentralManagerDelegate {
                         advertisementData: [String : Any],
                         rssi RSSI: NSNumber) {
         if periph.name == "PLAYBULB sphere" {
-            central.stopScan()
+            /* central.stopScan() */
             guard let cbk = callback else {
                 print("discovered device before callback assigned")
                 return
             }
 
-            // cbk(periph)
-            print("connecting")
-            central.connect(periph)
+            cbk(periph)
         }
     }
 
@@ -75,10 +73,11 @@ let scanner = Scanner()
 scanner.scan() { orb in
     print("found orb", orb.identifier)
     print(orb.state.rawValue)
-    print(cm)
+    print("connecting")
     cm.connect(orb, options: [
         CBConnectPeripheralOptionNotifyOnConnectionKey: true
     ])
+    print("tried to connect", orb.state.rawValue)
 
     // let delegate = OrbDelegate()
     // orb.delegate = delegate
@@ -86,7 +85,6 @@ scanner.scan() { orb in
 }
 
 let cm = CBCentralManager.init(delegate: scanner, queue: nil)
-print(cm)
 
 while RunLoop.current.run(
     mode: RunLoop.Mode.default,
