@@ -58,7 +58,7 @@ class TagManager: NSObject, CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral,
         didUpdateNotificationStateFor characteristic: CBCharacteristic,
         error: Error?) {
-        print("notif state", characteristic)
+        print("notif state", characteristic, error ?? "no error")
     }
 }
 
