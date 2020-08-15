@@ -1,9 +1,7 @@
 import CoreBluetooth
 
-let DEVICE = "073D8EDC-A732-4029-BACB-F893D3E9C7E3"
-
-func getDevice(cm: CBCentralManager) -> CBPeripheral? {
-    guard let uuid = UUID.init(uuidString: DEVICE) else {
+func getDevice(cm: CBCentralManager, id: String) -> CBPeripheral? {
+    guard let uuid = UUID.init(uuidString: id) else {
         print("bad UUID")
         return nil
     }
@@ -32,17 +30,22 @@ func getChar(service: CBService, charId: CBUUID) -> CBCharacteristic? {
 
 class Finder: NSObject, CBCentralManagerDelegate {
     let callback: ((CBPeripheral) -> ())
+    let deviceName: String
+    let deviceId: String
     var peripheral: CBPeripheral?
 
-    init(cbk: @escaping (CBPeripheral) -> ()) {
+    init(deviceName: String, deviceId: String,
+         cbk: @escaping (CBPeripheral) -> ()) {
         callback = cbk
+        self.deviceName = deviceName
+        self.deviceId = deviceId
     }
 
     func centralManager(_ central: CBCentralManager,
                         didDiscover periph: CBPeripheral,
                         advertisementData: [String : Any],
                         rssi RSSI: NSNumber) {
-        if periph.name == "PLAYBULB sphere" {
+        if periph.name == deviceName {
             central.stopScan()
             guard peripheral == nil else {
                 print("found two orbs?!")
@@ -57,7 +60,7 @@ class Finder: NSObject, CBCentralManagerDelegate {
         switch central.state {
         case .poweredOn:
             // Try looking for a previously-connected device.
-            if let periph = getDevice(cm: central) {
+            if let periph = getDevice(cm: central, id: deviceId) {
                 peripheral = periph
                 print("found existing")
                 central.connect(periph)

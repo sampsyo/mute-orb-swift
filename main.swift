@@ -1,5 +1,7 @@
 import Foundation
 
+let DEVICE = "073D8EDC-A732-4029-BACB-F893D3E9C7E3"
+
 func randColor() -> Color {
     return (
         255,
@@ -9,7 +11,7 @@ func randColor() -> Color {
     )
 }
 
-let manager = OrbManager()
+let manager = OrbManager(id: DEVICE)
 manager.start() { orb in
     orb.getColor() { color in
         print(color)

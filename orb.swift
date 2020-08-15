@@ -28,6 +28,11 @@ class OrbManager: NSObject, CBPeripheralDelegate {
     var characterizer: Characterizer?
     var cm: CBCentralManager?
     var orb: Orb?
+    var deviceId: String
+
+    init(id: String) {
+        deviceId = id
+    }
 
     func start(cbk: @escaping (Orb) -> ()) {
         characterizer = nil
@@ -45,7 +50,8 @@ class OrbManager: NSObject, CBPeripheralDelegate {
         }
         characterizer = ch
 
-        finder = Finder() { periph in
+        finder = Finder(deviceName: "PLAYBULB sphere",
+                        deviceId: deviceId) { periph in
             print("connected", periph.identifier)
             periph.delegate = ch
             periph.discoverServices([SERVICE])
@@ -81,7 +87,8 @@ class Orb {
     let colorChar: CBCharacteristic
     var colorCbk: ((Color) -> ())?
 
-    init(peripheral: CBPeripheral, service: CBService, colorChar: CBCharacteristic) {
+    init(peripheral: CBPeripheral, service: CBService,
+         colorChar: CBCharacteristic) {
         self.peripheral = peripheral
         self.service = service
         self.colorChar = colorChar
