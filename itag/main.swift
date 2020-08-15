@@ -26,6 +26,8 @@ class TagManager: NSObject, CBPeripheralDelegate {
                 fatalError("missing button characteristic")
             }
             print(char)
+            periph.delegate = self
+            periph.setNotifyValue(true, for:char)
         }
         characterizer = ch
 
@@ -44,18 +46,7 @@ class TagManager: NSObject, CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral,
                     didUpdateValueFor characteristic: CBCharacteristic,
                     error: Error?) {
-        print("got a value", characteristic.value!)
-    }
-
-    func peripheral(_ peripheral: CBPeripheral,
-                    didWriteValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("finished writing")
-    }
-
-    func peripheralIsReady(
-        toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        print("ready")
+        print("updated!")
     }
 }
 
