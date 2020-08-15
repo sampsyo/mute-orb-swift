@@ -8,6 +8,7 @@ class TagManager: NSObject, CBPeripheralDelegate {
     var characterizer: Characterizer?
     var cm: CBCentralManager?
     var deviceId: String
+    var tag: CBPeripheral?
 
     init(id: String) {
         deviceId = id
@@ -26,8 +27,12 @@ class TagManager: NSObject, CBPeripheralDelegate {
                 fatalError("missing button characteristic")
             }
             print(char)
+            self.tag = periph
             periph.delegate = self
-            periph.setNotifyValue(true, for:char)
+            periph.setNotifyValue(true, for: char)
+            print("set!", char)
+            // periph.readValue(for: char)
+            // print("read!", char)
         }
         characterizer = ch
 
@@ -43,10 +48,17 @@ class TagManager: NSObject, CBPeripheralDelegate {
 
     // Peripheral delegate methods.
 
+    func peripheral(
+        _ peripheral: CBPeripheral,
+        didUpdateValueFor characteristic: CBCharacteristic,
+        error: Error?) {
+        print("updated!", characteristic)
+    }
+
     func peripheral(_ peripheral: CBPeripheral,
-                    didUpdateValueFor characteristic: CBCharacteristic,
-                    error: Error?) {
-        print("updated!")
+        didUpdateNotificationStateFor characteristic: CBCharacteristic,
+        error: Error?) {
+        print("notif state", characteristic)
     }
 }
 
