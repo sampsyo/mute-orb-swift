@@ -1,6 +1,7 @@
 import CoreBluetooth
 
 let SERVICE = CBUUID.init(string: "ffe0")
+let BUTTON_CHAR = CBUUID.init(string: "ffe1")
 
 class TagManager: NSObject, CBPeripheralDelegate {
     var finder: Finder?
@@ -19,10 +20,16 @@ class TagManager: NSObject, CBPeripheralDelegate {
 
         let ch = Characterizer() { periph, svc in
             print("characterized")
+            print(periph)
+            print(svc)
+            guard let char = getChar(service: svc, charId: BUTTON_CHAR) else {
+                fatalError("missing button characteristic")
+            }
+            print(char)
         }
         characterizer = ch
 
-        finder = Finder(deviceName: "iTAG",
+        finder = Finder(deviceName: "iTAG            ",
                         deviceId: deviceId) { periph in
             print("connected", periph.identifier)
             periph.delegate = ch
@@ -52,7 +59,7 @@ class TagManager: NSObject, CBPeripheralDelegate {
     }
 }
 
-let DEVICE = "xxx"
+let DEVICE = "DF39718D-D4A7-4632-ABE0-85ECE89904F1"
 
 let manager = TagManager(id: DEVICE)
 manager.start()
