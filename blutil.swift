@@ -83,6 +83,12 @@ class Finder: NSObject, CBCentralManagerDelegate {
                         error: Error?) {
         print("failed to connect", peripheral)
     }
+
+    func centralManager(_ central: CBCentralManager,
+                        didDisconnectPeripheral peripheral: CBPeripheral,
+                        error: Error?) {
+        print("disconnected")
+    }
 }
 
 class Characterizer: NSObject, CBPeripheralDelegate {
@@ -103,9 +109,9 @@ class Characterizer: NSObject, CBPeripheralDelegate {
             print("expected one service")
             return
         }
-        let orbSvc = svcs[0]
+        let svc = svcs[0]
 
-        peripheral.discoverCharacteristics(nil, for: orbSvc)
+        peripheral.discoverCharacteristics(nil, for: svc)
     }
 
     func peripheral(_ peripheral: CBPeripheral,
